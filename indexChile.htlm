@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Financiero Chile</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#09090f; --bg2:#111118; --bg3:#1a1a24;
+    --border:#2a2a38; --accent:#00e5a0; --accent2:#0099ff;
+    --red:#ff4060; --green:#00e5a0;
+    --text:#e8e8f0; --muted:#6b6b80; --label:#9898b0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'IBM Plex Sans',sans-serif;min-height:100vh}
+  body::before{content:'';position:fixed;inset:0;
+    background-image:linear-gradient(rgba(0,229,160,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,229,160,.022) 1px,transparent 1px);
+    background-size:40px 40px;pointer-events:none;z-index:0}
+  .wrap{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:24px 20px}
+ 
+  /* ── Header ── */
+  header{display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:26px;padding-bottom:18px;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:12px}
+  .hl{display:flex;align-items:baseline;gap:12px}
+  h1{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--text)}
+  h1 em{color:var(--accent);font-style:normal}
+  .sub{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+  .hr{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .badge{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);
+    border:1px solid var(--border);padding:4px 9px;border-radius:4px;letter-spacing:1px}
+  .badge b{color:var(--accent2);font-weight:500}
+  .lupd{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted)}
+  .lupd b{color:var(--label);font-weight:400}
+  .rbtn{display:flex;align-items:center;gap:7px;background:var(--bg3);
+    border:1px solid var(--border);color:var(--accent);padding:7px 14px;
+    border-radius:6px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+    cursor:pointer;transition:all .2s;letter-spacing:1px}
+  .rbtn:hover:not(.loading){background:rgba(0,229,160,.08);border-color:var(--accent)}
+  .rbtn.loading{opacity:.45;cursor:not-allowed}
+  .rbtn svg{width:13px;height:13px;flex-shrink:0}
+  .spin{animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+ 
+  /* ── Status ── */
+  .sbar{display:flex;align-items:center;gap:8px;margin-bottom:22px;
+    font-family:'IBM Plex Mono',monospace;font-size:11px}
+  .sdot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0}
+  .sdot.ld{background:var(--accent2);animation:blink .7s infinite}
+  .sdot.er{background:var(--red)}
+  .sdot.ok{background:var(--green);animation:glow 2.5s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+  @keyframes glow{0%,100%{opacity:1}50%{opacity:.4}}
+  .stxt{color:var(--muted)}
+ 
+  /* ── Section ── */
+  .sh{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;
+    text-transform:uppercase;color:var(--muted);margin-bottom:12px;
+    display:flex;align-items:center;gap:12px}
+  .sh::after{content:'';flex:1;height:1px;background:var(--border)}
+ 
+  /* ── Grids ── */
+  .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+  .g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px}
+  @media(max-width:1000px){.g4,.g3{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:500px){.g4,.g3{grid-template-columns:1fr}}
+ 
+  /* ── Card ── */
+  .card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+    padding:18px;position:relative;overflow:hidden;
+    transition:border-color .2s,transform .15s;animation:fu .35s ease both}
+  .card:hover{border-color:rgba(0,229,160,.18);transform:translateY(-1px)}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+  .card.up::before{background:var(--green)}
+  .card.dn::before{background:var(--red)}
+  .card.nt::before{background:var(--border)}
+  @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+ 
+  .clabel{font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;
+    text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .cticker{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;
+    color:var(--label);margin-bottom:6px}
+  .cval{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:600;
+    letter-spacing:-1px;line-height:1;margin-bottom:10px;color:var(--text)}
+  .cval.empty{color:var(--border)}
+  .cpill{display:inline-flex;align-items:center;gap:3px;font-family:'IBM Plex Mono',monospace;
+    font-size:11px;font-weight:500;padding:3px 8px;border-radius:4px}
+  .cpill.up{color:var(--green);background:rgba(0,229,160,.09)}
+  .cpill.dn{color:var(--red);background:rgba(255,64,96,.09)}
+  .cpill.nt{color:var(--muted);background:rgba(107,107,128,.09)}
+  .cmeta{margin-top:8px;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace}
+  .cerr{margin-top:6px;font-size:10px;color:var(--red);font-family:'IBM Plex Mono',monospace}
+ 
+  /* ── Skeleton ── */
+  .sk{background:linear-gradient(90deg,var(--bg3) 25%,#222230 50%,var(--bg3) 75%);
+    background-size:200% 100%;animation:sh 1.4s infinite;border-radius:3px}
+  @keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+ 
+  /* ── Analysis ── */
+  .acard{background:var(--bg2);border:1px solid var(--border);border-radius:10px;
+    padding:22px;position:relative;overflow:hidden}
+  .acard::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,var(--accent2),var(--accent))}
+  .atop{display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:14px;flex-wrap:wrap;gap:8px}
+  .atitle{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:2px;
+    text-transform:uppercase;color:var(--accent2)}
+  .asrc{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:1px}
+  .atxt{font-size:13px;line-height:1.78;color:var(--label)}
+  .atxt p{margin-bottom:8px}
+  .atxt p:last-child{margin-bottom:0}
+  .atxt strong{color:var(--text)}
+ 
+  footer{margin-top:28px;padding-top:16px;border-top:1px solid var(--border);
+    display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+    font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+ 
+  <header>
+    <div class="hl">
+      <h1>FINDATA <em>//</em> CL</h1>
+      <span class="sub">Chile &amp; Global</span>
+    </div>
+    <div class="hr">
+      <span class="badge">Fuente: <b>Yahoo Finance</b></span>
+      <span class="lupd">Actualizado: <b id="ut">—</b></span>
+      <button class="rbtn" id="rbtn" onclick="fetchAll()">
+        <svg id="rico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+        </svg>
+        REFRESH
+      </button>
+    </div>
+  </header>
+ 
+  <div class="sbar">
+    <div class="sdot ld" id="sdot"></div>
+    <div class="stxt" id="stxt">Cargando...</div>
+  </div>
+ 
+  <div class="sh">Indicadores principales</div>
+  <div class="g4" id="g4"></div>
+ 
+  <div class="sh">Factores complementarios</div>
+  <div class="g3" id="g3"></div>
+ 
+    <div class="atxt" id="atxt">
+      <div class="sk" style="height:13px;width:96%;margin-bottom:9px"></div>
+      <div class="sk" style="height:13px;width:78%;margin-bottom:9px"></div>
+      <div class="sk" style="height:13px;width:55%"></div>
+    </div>
+  </div>
+ 
+  <footer>
+    <span>FINDATA // Yahoo Finance · UF mindicador.cl </span>
+    <span id="fdate">—</span>
+  </footer>
+</div>
+ 
+<script>
+/* ═══════════════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════════════ */
+const HERO = [
+  { id:'usdclp', label:'Divisa',      ticker:'USD/CLP', symbol:'CLP=X',   unit:'$',    dec:1, suffix:'' },
+  { id:'ipsa',   label:'Bolsa Chile', ticker:'IPSA',    symbol:'%5EIPSA', unit:'',     dec:0, suffix:' pts' },
+  { id:'sp500',  label:'S&P 500',     ticker:'S&P 500', symbol:'%5EGSPC', unit:'',     dec:0, suffix:' pts' },
+  { id:'btc',    label:'Bitcoin',     ticker:'BTC/USD', symbol:'BTC-USD', unit:'US$',  dec:0, suffix:'' },
+];
+ 
+const SECONDARY = [
+  { id:'cobre',  label:'Cobre',       ticker:'COPPER',  symbol:'HG%3DF',  unit:'US$',  dec:3, suffix:'/lb' },
+  { id:'oro',    label:'Oro',         ticker:'GOLD',    symbol:'GC%3DF',  unit:'US$',  dec:0, suffix:'/oz' },
+  { id:'oil',    label:'WTI',         ticker:'WTI',     symbol:'CL%3DF',  unit:'US$',  dec:2, suffix:'/bbl' },
+  { id:'uf',     label:'UF',          ticker:'UF/CLP',  symbol:'UF',      unit:'$',    dec:2, suffix:'', custom:true },
+  { id:'nasdaq', label:'NASDAQ',      ticker:'NASDAQ',  symbol:'%5EIXIC', unit:'',     dec:0, suffix:' pts' },
+  { id:'brent',  label:'Brent',       ticker:'BRENT',   symbol:'BZ%3DF',  unit:'US$',  dec:2, suffix:'/bbl' },
+];
+ 
+/* ═══════════════════════════════════════════════════════
+   CORS PROXIES — se prueban en orden hasta que uno funcione
+═══════════════════════════════════════════════════════ */
+const PROXIES = [
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+];
+ 
+async function proxyFetch(targetUrl) {
+  let lastErr;
+  for (const makeUrl of PROXIES) {
+    try {
+      const res = await fetch(makeUrl(targetUrl), { signal: AbortSignal.timeout(8000) });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const text = await res.text();
+      // allorigins devuelve JSON con .contents a veces — detectar
+      try {
+        const j = JSON.parse(text);
+        if (j.contents) return j.contents;    // allorigins wrapper
+        if (j.chart)    return text;           // ya es Yahoo JSON
+        return text;
+      } catch { return text; }
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('Todos los proxies fallaron');
+}
+ 
+/* ═══════════════════════════════════════════════════════
+   UF — mindicador.cl  (API pública chilena)
+═══════════════════════════════════════════════════════ */
+async function fetchUF() {
+  const t = new Date();
+  const d = String(t.getDate()).padStart(2,'0');
+  const m = String(t.getMonth()+1).padStart(2,'0');
+  const y = t.getFullYear();
+  const url = `https://mindicador.cl/api/uf/${d}-${m}-${y}`;
+  const raw = await proxyFetch(url);
+  const data = JSON.parse(raw);
+  const val = data.serie?.[0]?.valor;
+  if (!val) throw new Error('UF sin dato');
+  return { price: val, change: 0 };
+}
+ 
+/* ═══════════════════════════════════════════════════════
+   YAHOO FINANCE
+═══════════════════════════════════════════════════════ */
+async function fetchYahoo(symbol) {
+  // Usar symbol tal cual (ya URL-encoded en el array)
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=5d&includePrePost=false`;
+  const raw  = await proxyFetch(url);
+  const json = JSON.parse(raw);
+ 
+  const result = json?.chart?.result?.[0];
+  if (!result) {
+    const err = json?.chart?.error?.description || 'Sin resultado';
+    throw new Error(err);
+  }
+ 
+  const meta      = result.meta;
+  const price     = meta.regularMarketPrice;
+  const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? meta.regularMarketPreviousClose;
+  const change    = prevClose ? ((price - prevClose) / prevClose) * 100 : null;
+  const vol       = meta.regularMarketVolume
+    ? (meta.regularMarketVolume > 1e9
+        ? (meta.regularMarketVolume/1e9).toFixed(1)+'B'
+        : meta.regularMarketVolume > 1e6
+        ? (meta.regularMarketVolume/1e6).toFixed(1)+'M'
+        : meta.regularMarketVolume.toLocaleString('es-CL'))
+    : null;
+ 
+  return { price, change, vol };
+}
+ 
+/* ═══════════════════════════════════════════════════════
+   FETCH ONE
+═══════════════════════════════════════════════════════ */
+async function fetchOne(ind) {
+  try {
+    let price, change, vol;
+    if (ind.custom) {
+      ({ price, change } = await fetchUF());
+    } else {
+      ({ price, change, vol } = await fetchYahoo(ind.symbol));
+    }
+    return { value: price, change: change !== null ? +change.toFixed(4) : null, vol, ok: true };
+  } catch(e) {
+    console.warn('[WARN]', ind.ticker, e.message);
+    return { value: null, change: null, ok: false, err: e.message };
+  }
+}
+ 
+/* ═══════════════════════════════════════════════════════
+   HELPERS UI
+═══════════════════════════════════════════════════════ */
+function setStatus(cls, msg) {
+  document.getElementById('sdot').className = 'sdot ' + (cls||'');
+  document.getElementById('stxt').textContent = msg;
+}
+ 
+function fmt(n, dec) {
+  return Number(n).toLocaleString('es-CL', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+ 
+function skeletonCard(ind) {
+  return `<div class="card nt" id="card-${ind.id}">
+    <div class="clabel">${ind.label}</div>
+    <div class="cticker">${ind.ticker}</div>
+    <div class="cval empty">———</div>
+    <div class="sk" style="height:22px;width:70px;border-radius:4px"></div>
+    <div class="sk" style="height:10px;width:55%;margin-top:8px"></div>
+  </div>`;
+}
+ 
+function buildCard(ind, d, delay) {
+  const dir   = !d.ok ? 'nt' : d.change > 0 ? 'up' : d.change < 0 ? 'dn' : 'nt';
+  const arrow = d.change > 0 ? '▲' : d.change < 0 ? '▼' : '–';
+  const pct   = d.change !== null ? `${arrow} ${Math.abs(d.change).toFixed(2)}%` : '—';
+  const val   = d.value !== null
+    ? `${ind.unit}${fmt(d.value, ind.dec)}${ind.suffix}`
+    : '—';
+  const vol   = d.vol ? `<div class="cmeta">Vol: ${d.vol}</div>` : '';
+  const err   = !d.ok ? `<div class="cerr">⚠ ${(d.err||'').slice(0,50)}</div>` : '';
+ 
+  return `<div class="card ${dir}" id="card-${ind.id}" style="animation-delay:${delay}ms">
+    <div class="clabel">${ind.label}</div>
+    <div class="cticker">${ind.ticker}</div>
+    <div class="cval">${val}</div>
+    <span class="cpill ${dir}">${pct}</span>
+    ${vol}${err}
+  </div>`;
+}
+ 
+function initSkeletons() {
+  document.getElementById('g4').innerHTML = HERO.map(skeletonCard).join('');
+  document.getElementById('g3').innerHTML = SECONDARY.map(skeletonCard).join('');
+}
+ 
+/* ═══════════════════════════════════════════════════════
+   ANALYSIS — Claude API
+═══════════════════════════════════════════════════════ */
+async function fetchAnalysis(snap) {
+  const lines = Object.entries(snap)
+    .filter(([,v]) => v.value !== null)
+    .map(([k,v]) => `${k}: ${v.value} (${v.change !== null ? (v.change>=0?'+':'')+v.change.toFixed(2)+'%' : 'sin cambio'})`)
+    .join('; ');
+ 
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      model:'claude-sonnet-4-20250514',
+      max_tokens:450,
+      messages:[{
+        role:'user',
+        content:`Datos actuales de mercado hoy: ${lines}.\nEscribe un análisis conciso (3-4 oraciones) en español sobre el mercado chileno y factores globales. Usa <p> y <strong>. Cita los valores reales. Sin consejos de inversión.`
+      }]
+    })
+  });
+  const data = await res.json();
+  return data.content?.filter(b=>b.type==='text').map(b=>b.text).join('') || '';
+}
+ 
+/* ═══════════════════════════════════════════════════════
+   MAIN
+═══════════════════════════════════════════════════════ */
+let loading = false;
+ 
+async function fetchAll() {
+  if (loading) return;
+  loading = true;
+ 
+  const btn  = document.getElementById('rbtn');
+  const icon = document.getElementById('rico');
+  btn.classList.add('loading');
+  icon.classList.add('spin');
+ 
+  initSkeletons();
+  setStatus('ld', 'Consultando Yahoo Finance...');
+  document.getElementById('atxt').innerHTML =
+    `<div class="sk" style="height:13px;width:96%;margin-bottom:9px"></div>
+     <div class="sk" style="height:13px;width:78%;margin-bottom:9px"></div>
+     <div class="sk" style="height:13px;width:55%"></div>`;
+ 
+  const all     = [...HERO, ...SECONDARY];
+  const results = await Promise.allSettled(all.map(ind => fetchOne(ind)));
+  const snap    = {};
+ 
+  results.forEach((r, i) => {
+    const ind = all[i];
+    const d   = r.status === 'fulfilled'
+      ? r.value
+      : { value:null, change:null, ok:false, err: r.reason?.message || 'Error' };
+    snap[ind.ticker] = d;
+    const el = document.getElementById(`card-${ind.id}`);
+    if (el) el.outerHTML = buildCard(ind, d, i * 40);
+  });
+ 
+  const now = new Date();
+  document.getElementById('ut').textContent =
+    now.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  document.getElementById('fdate').textContent =
+    now.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+ 
+  const ok = Object.values(snap).filter(v=>v.ok).length;
+  setStatus('ok', `${ok}/${all.length} indicadores cargados · Yahoo Finance`);
+ 
+  try {
+    const txt = await fetchAnalysis(snap);
+    document.getElementById('atxt').innerHTML = txt || '<p>Sin análisis.</p>';
+  } catch {
+    document.getElementById('atxt').innerHTML = '<p>No se pudo generar el análisis.</p>';
+  }
+ 
+  btn.classList.remove('loading');
+  icon.classList.remove('spin');
+  loading = false;
+ 
+// ✅ Fetch real cada 60 segundos
+setInterval(fetchAll, 100000);
+
+// ⚡ Refresh visual cada 1 segundo (reloj en vivo)
+setInterval(() => {
+  const now = new Date();
+  document.getElementById('ut').textContent =
+    now.toLocaleTimeString('es-CL', {
+      hour:'2-digit',
+      minute:'2-digit',
+      second:'2-digit'
+    });
+}, 1000);
+}
+ 
+window.addEventListener('DOMContentLoaded', fetchAll);
+</script>
+</body>
+</html>
+ 
