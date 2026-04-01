@@ -2,5 +2,5 @@ git init
 git add .
 git commit -m "init dashboard"
 git branch -M main
-git remote add origin https://github.com/YOUR-USE/_Financial_Dashboard_Chile.git
+git remote add origin https://github.com/YOUR-USER/Financial_Dashboard_Chile.git
 git push -u origin main
